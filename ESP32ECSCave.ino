@@ -47,7 +47,7 @@
 #define minReads                   1700           // nombre min de lectures ADC pour calculer un Irms valable 
 
 float consigneEcsPac               = 45;          // consigne de temp du chauffage par PAC
-float consigneEcsResMin            = 55;          // consigne de temp pour re-mise en route du chauffage par ExtRes
+float consigneEcsResMin            = 58;          // consigne de temp pour re-mise en route du chauffage par ExtRes
 float consigneEcsResMax            = 60;          // consigne de temp pour arret du du chauffage par ExtRes
 float alpha                        = 0;           // tx de hachage du SSD
 float ECStemp                      = 0;           // temperature ECS 
@@ -121,12 +121,12 @@ void loop() {
     if (millis() - tempTimer      > tempMaxInterval)     {     
       if (millis() - wifiTimer    > wifiMaxInterval)     { alpha = 0; analogWrite(SSR, alpha); wifiTimer = millis(); }  
       if (millis() - pacEnTimer   > pacEnMaxInterval)    { digitalWrite(PACEN, HIGH); pacEnTimer = millis(); } 
-      CAVEtemp=sensors.getTempCByIndex(0)*ECSTempCorrector-CAVETempCorrector;  
-      ECStemp=sensors.getTempCByIndex(1)*ECSTempCorrector;                 
+      if (sensors.getTempCByIndex(0) > 0) CAVEtemp=sensors.getTempCByIndex(0)*ECSTempCorrector-CAVETempCorrector;  
+      if (sensors.getTempCByIndex(1) > 0) ECStemp=sensors.getTempCByIndex(1)*ECSTempCorrector;                 
       sensors.requestTemperatures();       
       if (ECStemp > consigneEcsPac && digitalRead(PACEN) == LOW) digitalWrite(PACEN, HIGH); 
       // if (pacBottomTemp < maxPacBottomTemp)        { modePacRes = false; digitalWrite(LED, HIGH); }
-      // if (ECStemp < consigneEcsResMin && modePacRes)  { modePacRes = false; digitalWrite(LED, HIGH);  }
+      if (ECStemp < consigneEcsResMin && modePacRes)  { modePacRes = false; digitalWrite(LED, HIGH);  }
       if (ECStemp > consigneEcsResMax && !modePacRes) { modePacRes = true;  digitalWrite(LED, LOW); wattState = 1; digitalWrite(EXTRES, HIGH); digitalWrite(PACRES, HIGH); consigneEcsResMaxCounter++; }
       // if (ExtResTemp > maxExtResTemp)              { modePacRes = true;  digitalWrite(LED, LOW); wattState = 1; digitalWrite(EXTRES, HIGH); digitalWrite(PACRES, HIGH); maxExtResTemp++; }
       tempTimer=millis(); 
